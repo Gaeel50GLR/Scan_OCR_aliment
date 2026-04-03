@@ -1,0 +1,2402 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1e293b">
+<title>NutriScan — Scanner Alimentaire</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ===== CSS RESET & VARIABLES ===== */
+:root {
+  --primary: #3b82f6;
+  --primary-dark: #2563eb;
+  --primary-light: #93c5fd;
+  --secondary: #10b981;
+  --secondary-dark: #059669;
+  --accent: #f59e0b;
+  --danger: #ef4444;
+  --danger-light: #fca5a5;
+  --warning: #f97316;
+  --info: #06b6d4;
+
+  --bg: #f1f5f9;
+  --bg-card: #ffffff;
+  --bg-elevated: #ffffff;
+  --bg-input: #f8fafc;
+  --text: #0f172a;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --border: #e2e8f0;
+  --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+  --nav-height: 72px;
+  --header-height: 56px;
+
+  --nutri-a: #1e8f4e;
+  --nutri-b: #85bb2f;
+  --nutri-c: #fecb02;
+  --nutri-d: #ee8100;
+  --nutri-e: #e63e11;
+}
+
+[data-theme="dark"] {
+  --bg: #0f172a;
+  --bg-card: #1e293b;
+  --bg-elevated: #334155;
+  --bg-input: #1e293b;
+  --text: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border: #334155;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.4);
+  --shadow-lg: 0 10px 15px rgba(0,0,0,0.5);
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+html { font-size: 16px; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  transition: background 0.3s, color 0.3s;
+  -webkit-font-smoothing: antialiased;
+}
+
+input, button, select, textarea { font-family: inherit; font-size: inherit; }
+button { cursor: pointer; border: none; background: none; }
+a { text-decoration: none; color: inherit; }
+img { max-width: 100%; height: auto; }
+ul, ol { list-style: none; }
+
+/* ===== LAYOUT ===== */
+.app { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; }
+
+.page {
+  display: none; flex: 1; padding: 16px 16px calc(var(--nav-height) + 16px);
+  animation: fadeIn 0.25s ease;
+}
+.page.active { display: flex; flex-direction: column; }
+
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes scaleIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+
+/* ===== HEADER ===== */
+.header {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--bg-card); border-bottom: 1px solid var(--border);
+  padding: 12px 16px; display: flex; align-items: center; justify-content: space-between;
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  height: var(--header-height);
+}
+.header-title { font-size: 1.1rem; font-weight: 700; }
+.header-actions { display: flex; gap: 8px; }
+.header-btn {
+  width: 36px; height: 36px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg); color: var(--text-secondary);
+  transition: all 0.2s;
+}
+.header-btn:hover { background: var(--primary); color: white; }
+
+/* ===== BOTTOM NAV ===== */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
+  background: var(--bg-card); border-top: 1px solid var(--border);
+  display: flex; justify-content: space-around; align-items: center;
+  padding: 8px 0 max(env(safe-area-inset-bottom), 8px);
+  height: var(--nav-height);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+}
+.nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 4px 12px; border-radius: 12px; transition: all 0.2s;
+  color: var(--text-muted); font-size: 0.65rem; font-weight: 500;
+  position: relative;
+}
+.nav-item.active { color: var(--primary); }
+.nav-item.active::before {
+  content: ''; position: absolute; top: -8px;
+  width: 20px; height: 3px; border-radius: 2px; background: var(--primary);
+}
+.nav-item svg { width: 22px; height: 22px; }
+.nav-item .badge {
+  position: absolute; top: -2px; right: 4px;
+  background: var(--danger); color: white;
+  font-size: 0.6rem; font-weight: 700;
+  min-width: 16px; height: 16px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; padding: 0 4px;
+}
+
+/* ===== SCAN BUTTON ===== */
+.scan-nav-btn {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+  color: white; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 12px rgba(59,130,246,0.4);
+  margin-top: -20px; transition: transform 0.2s;
+}
+.scan-nav-btn:active { transform: scale(0.92); }
+.scan-nav-btn svg { width: 26px; height: 26px; }
+
+/* ===== CARDS ===== */
+.card {
+  background: var(--bg-card); border-radius: var(--radius);
+  padding: 16px; box-shadow: var(--shadow);
+  border: 1px solid var(--border); transition: all 0.2s;
+}
+.card:hover { box-shadow: var(--shadow-md); }
+
+.card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.card-title { font-size: 1rem; font-weight: 600; }
+.card-subtitle { font-size: 0.8rem; color: var(--text-secondary); margin-top: 2px; }
+
+/* ===== BUTTONS ===== */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 12px 20px; border-radius: var(--radius-sm); font-weight: 600;
+  font-size: 0.9rem; transition: all 0.2s; white-space: nowrap;
+}
+.btn:active { transform: scale(0.97); }
+
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-dark); }
+.btn-secondary { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { background: var(--border); }
+.btn-success { background: var(--secondary); color: white; }
+.btn-danger { background: var(--danger); color: white; }
+.btn-ghost { color: var(--primary); }
+.btn-block { width: 100%; }
+.btn-sm { padding: 8px 14px; font-size: 0.8rem; }
+.btn-lg { padding: 14px 24px; font-size: 1rem; }
+.btn-icon { width: 40px; height: 40px; padding: 0; border-radius: 50%; }
+
+/* ===== INPUTS ===== */
+.input-group { margin-bottom: 16px; }
+.input-group label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 6px; }
+.input-group input, .input-group select, .input-group textarea {
+  width: 100%; padding: 12px 14px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); background: var(--bg-input);
+  color: var(--text); font-size: 0.95rem; transition: border-color 0.2s;
+}
+.input-group input:focus, .input-group select:focus, .input-group textarea:focus {
+  outline: none; border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+}
+
+.search-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; background: var(--bg-card);
+  border: 1px solid var(--border); border-radius: var(--radius);
+  margin-bottom: 16px;
+}
+.search-bar svg { width: 20px; height: 20px; color: var(--text-muted); flex-shrink: 0; }
+.search-bar input {
+  flex: 1; border: none; background: none; color: var(--text);
+  font-size: 0.95rem; outline: none;
+}
+
+/* ===== CHIPS & TAGS ===== */
+.chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 500;
+}
+.chip-primary { background: rgba(59,130,246,0.12); color: var(--primary); }
+.chip-success { background: rgba(16,185,129,0.12); color: var(--secondary); }
+.chip-danger { background: rgba(239,68,68,0.12); color: var(--danger); }
+.chip-warning { background: rgba(249,115,22,0.12); color: var(--warning); }
+.chip-info { background: rgba(6,182,212,0.12); color: var(--info); }
+
+/* ===== NUTRI-SCORE ===== */
+.nutri-score { display: flex; gap: 2px; align-items: center; }
+.nutri-score-item {
+  width: 32px; height: 32px; border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 0.85rem; color: white; opacity: 0.35;
+  transition: all 0.2s;
+}
+.nutri-score-item.active { opacity: 1; transform: scale(1.2); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+.ns-a { background: var(--nutri-a); }
+.ns-b { background: var(--nutri-b); }
+.ns-c { background: var(--nutri-c); color: #333; }
+.ns-d { background: var(--nutri-d); }
+.ns-e { background: var(--nutri-e); }
+
+/* ===== NUTRITION TABLE ===== */
+.nutri-table { width: 100%; font-size: 0.85rem; }
+.nutri-table tr { border-bottom: 1px solid var(--border); }
+.nutri-table td { padding: 10px 4px; }
+.nutri-table td:first-child { color: var(--text-secondary); }
+.nutri-table td:nth-child(2),
+.nutri-table td:nth-child(3),
+.nutri-table td:nth-child(4) { text-align: right; font-weight: 500; white-space: nowrap; }
+.nutri-table thead td { font-weight: 700; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* ===== TABS ===== */
+.tabs {
+  display: flex; gap: 4px; background: var(--bg);
+  padding: 4px; border-radius: var(--radius-sm); margin-bottom: 16px;
+  overflow-x: auto; -webkit-overflow-scrolling: touch;
+}
+.tab {
+  flex: 1; padding: 8px 12px; border-radius: 6px; font-size: 0.8rem;
+  font-weight: 500; color: var(--text-secondary); text-align: center;
+  transition: all 0.2s; white-space: nowrap; min-width: fit-content;
+}
+.tab.active { background: var(--bg-card); color: var(--text); box-shadow: var(--shadow); font-weight: 600; }
+
+/* ===== MODAL ===== */
+.modal-overlay {
+  position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,0.5);
+  display: none; align-items: flex-end; justify-content: center;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--bg-card); width: 100%; max-width: 480px;
+  max-height: 90vh; border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  overflow-y: auto; animation: slideUp 0.3s ease;
+  padding: 20px 16px max(env(safe-area-inset-bottom,16px), 16px);
+}
+.modal-handle {
+  width: 36px; height: 4px; background: var(--border);
+  border-radius: 2px; margin: 0 auto 16px;
+}
+.modal-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; }
+
+/* ===== PROGRESS BAR ===== */
+.progress-bar { height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+.progress-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
+
+/* ===== CONFIDENCE METER ===== */
+.confidence { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
+.confidence-bar { flex: 1; height: 4px; background: var(--bg); border-radius: 2px; overflow: hidden; }
+.confidence-fill { height: 100%; border-radius: 2px; background: var(--secondary); }
+
+/* ===== EMPTY STATE ===== */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; padding: 40px 20px; text-align: center;
+}
+.empty-state svg { width: 80px; height: 80px; color: var(--text-muted); margin-bottom: 16px; opacity: 0.5; }
+.empty-state h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 8px; }
+.empty-state p { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 20px; max-width: 280px; }
+
+/* ===== SCANNER ===== */
+.scanner-container {
+  position: relative; width: 100%; aspect-ratio: 3/4;
+  border-radius: var(--radius-lg); overflow: hidden;
+  background: #000; margin-bottom: 16px;
+}
+.scanner-container video {
+  width: 100%; height: 100%; object-fit: cover;
+}
+.scanner-overlay {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.scan-frame {
+  width: 70%; aspect-ratio: 1.6; border: 2px solid rgba(255,255,255,0.6);
+  border-radius: 12px; position: relative;
+}
+.scan-frame::before, .scan-frame::after {
+  content: ''; position: absolute; width: 24px; height: 24px;
+  border-color: var(--primary); border-style: solid;
+}
+.scan-frame::before { top: -1px; left: -1px; border-width: 3px 0 0 3px; border-radius: 6px 0 0 0; }
+.scan-frame::after { top: -1px; right: -1px; border-width: 3px 3px 0 0; border-radius: 0 6px 0 0; }
+.scan-line {
+  position: absolute; top: 0; left: 10%; right: 10%;
+  height: 2px; background: var(--primary);
+  box-shadow: 0 0 8px var(--primary);
+  animation: scanLine 2s ease-in-out infinite;
+}
+@keyframes scanLine { 0%, 100% { top: 10%; } 50% { top: 90%; } }
+
+.scanner-modes {
+  display: flex; gap: 8px; margin-bottom: 16px;
+  justify-content: center;
+}
+.scanner-mode-btn {
+  padding: 8px 16px; border-radius: 20px; font-size: 0.8rem;
+  font-weight: 500; background: var(--bg); color: var(--text-secondary);
+  border: 1px solid var(--border); transition: all 0.2s;
+}
+.scanner-mode-btn.active {
+  background: var(--primary); color: white; border-color: var(--primary);
+}
+
+.scanner-result {
+  background: var(--bg-card); border-radius: var(--radius);
+  padding: 16px; border: 1px solid var(--border);
+  margin-bottom: 12px; animation: scaleIn 0.3s ease;
+}
+
+/* ===== PRODUCT CARD ===== */
+.product-card {
+  display: flex; gap: 12px; padding: 12px;
+  background: var(--bg-card); border-radius: var(--radius);
+  border: 1px solid var(--border); margin-bottom: 10px;
+  transition: all 0.2s; cursor: pointer;
+}
+.product-card:active { transform: scale(0.98); }
+.product-card-img {
+  width: 64px; height: 64px; border-radius: var(--radius-sm);
+  object-fit: cover; background: var(--bg); flex-shrink: 0;
+}
+.product-card-info { flex: 1; min-width: 0; }
+.product-card-name { font-weight: 600; font-size: 0.9rem; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.product-card-brand { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; }
+.product-card-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ===== FRIDGE ===== */
+.fridge-item {
+  display: flex; align-items: center; gap: 12px; padding: 12px;
+  background: var(--bg-card); border-radius: var(--radius);
+  border: 1px solid var(--border); margin-bottom: 8px;
+}
+.fridge-item-icon { font-size: 1.5rem; width: 40px; text-align: center; }
+.fridge-item-info { flex: 1; min-width: 0; }
+.fridge-item-name { font-weight: 600; font-size: 0.9rem; }
+.fridge-item-detail { font-size: 0.8rem; color: var(--text-secondary); }
+.fridge-item-expiry { text-align: right; font-size: 0.75rem; }
+.fridge-item-expiry.expired { color: var(--danger); font-weight: 600; }
+.fridge-item-expiry.soon { color: var(--warning); font-weight: 600; }
+.fridge-item-expiry.ok { color: var(--secondary); }
+.fridge-item-actions { display: flex; gap: 4px; }
+
+/* ===== SHOPPING LIST ===== */
+.shop-item {
+  display: flex; align-items: center; gap: 12px; padding: 12px;
+  background: var(--bg-card); border-radius: var(--radius-sm);
+  border: 1px solid var(--border); margin-bottom: 6px;
+  transition: all 0.2s;
+}
+.shop-item.checked { opacity: 0.5; }
+.shop-item.checked .shop-item-name { text-decoration: line-through; }
+.shop-checkbox {
+  width: 24px; height: 24px; border-radius: 50%;
+  border: 2px solid var(--border); display: flex;
+  align-items: center; justify-content: center;
+  transition: all 0.2s; flex-shrink: 0; cursor: pointer;
+}
+.shop-checkbox.checked { background: var(--secondary); border-color: var(--secondary); }
+.shop-checkbox.checked svg { display: block; }
+.shop-checkbox svg { display: none; width: 14px; height: 14px; color: white; }
+.shop-item-name { flex: 1; font-size: 0.9rem; }
+.shop-item-qty { font-size: 0.8rem; color: var(--text-secondary); }
+
+/* ===== RECIPE CARD ===== */
+.recipe-card {
+  background: var(--bg-card); border-radius: var(--radius);
+  border: 1px solid var(--border); overflow: hidden;
+  margin-bottom: 12px; transition: all 0.2s;
+}
+.recipe-card:active { transform: scale(0.98); }
+.recipe-card-body { padding: 14px; }
+.recipe-card-title { font-weight: 600; font-size: 1rem; margin-bottom: 4px; }
+.recipe-card-meta { display: flex; gap: 12px; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px; }
+.recipe-card-meta span { display: flex; align-items: center; gap: 4px; }
+.recipe-card-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.recipe-missing { font-size: 0.8rem; color: var(--warning); margin-top: 8px; }
+
+/* ===== COMPARISON ===== */
+.compare-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px; margin-bottom: 16px;
+}
+.compare-col { text-align: center; }
+.compare-col h4 { font-size: 0.8rem; margin-bottom: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.compare-row { display: flex; border-bottom: 1px solid var(--border); }
+.compare-label { width: 100px; flex-shrink: 0; padding: 8px 4px; font-size: 0.8rem; color: var(--text-secondary); }
+.compare-values { display: flex; flex: 1; }
+.compare-value { flex: 1; padding: 8px 4px; text-align: center; font-size: 0.85rem; font-weight: 500; }
+.compare-value.best { color: var(--secondary); font-weight: 700; }
+.compare-value.worst { color: var(--danger); }
+
+/* ===== TOAST ===== */
+.toast-container { position: fixed; top: 16px; left: 16px; right: 16px; z-index: 3000; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.toast {
+  background: var(--text); color: var(--bg); padding: 12px 16px;
+  border-radius: var(--radius-sm); font-size: 0.85rem; font-weight: 500;
+  animation: slideDown 0.3s ease; pointer-events: auto;
+  display: flex; align-items: center; gap: 8px;
+}
+.toast.success { background: var(--secondary); color: white; }
+.toast.error { background: var(--danger); color: white; }
+@keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* ===== LOADING ===== */
+.spinner {
+  width: 24px; height: 24px; border: 3px solid var(--border);
+  border-top-color: var(--primary); border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--bg) 25%, var(--border) 50%, var(--bg) 75%);
+  background-size: 200% 100%; animation: shimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* ===== SECTION TITLE ===== */
+.section-title {
+  font-size: 1.15rem; font-weight: 700; margin-bottom: 12px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.section-title .count { font-size: 0.8rem; color: var(--text-muted); font-weight: 400; }
+
+/* ===== FILTER BAR ===== */
+.filter-bar {
+  display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px;
+  margin-bottom: 16px; -webkit-overflow-scrolling: touch;
+}
+.filter-chip {
+  padding: 6px 14px; border-radius: 20px; font-size: 0.8rem;
+  font-weight: 500; background: var(--bg-card); color: var(--text-secondary);
+  border: 1px solid var(--border); white-space: nowrap;
+  transition: all 0.2s; flex-shrink: 0;
+}
+.filter-chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+/* ===== STAT CARD ===== */
+.stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+.stat-card {
+  background: var(--bg-card); border-radius: var(--radius);
+  padding: 14px; border: 1px solid var(--border);
+  text-align: center;
+}
+.stat-value { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
+.stat-label { font-size: 0.75rem; color: var(--text-secondary); margin-top: 2px; }
+
+/* ===== SWIPE ACTIONS ===== */
+.swipeable { position: relative; overflow: hidden; }
+.swipe-actions {
+  position: absolute; right: 0; top: 0; bottom: 0;
+  display: flex; align-items: stretch;
+}
+.swipe-action {
+  width: 60px; display: flex; align-items: center; justify-content: center;
+  color: white;
+}
+.swipe-action.delete { background: var(--danger); }
+.swipe-action.edit { background: var(--primary); }
+
+/* ===== SWITCH ===== */
+.switch-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; }
+.switch-row label { font-size: 0.9rem; }
+.switch {
+  width: 48px; height: 28px; border-radius: 14px;
+  background: var(--border); position: relative; cursor: pointer;
+  transition: background 0.3s;
+}
+.switch.active { background: var(--primary); }
+.switch::after {
+  content: ''; position: absolute; width: 22px; height: 22px;
+  border-radius: 50%; background: white; top: 3px; left: 3px;
+  transition: transform 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.switch.active::after { transform: translateX(20px); }
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* ===== HELPERS ===== */
+.flex { display: flex; }
+.flex-col { display: flex; flex-direction: column; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-4 { gap: 4px; }
+.gap-8 { gap: 8px; }
+.gap-12 { gap: 12px; }
+.gap-16 { gap: 16px; }
+.mt-8 { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.mb-8 { margin-bottom: 8px; }
+.mb-16 { margin-bottom: 16px; }
+.text-sm { font-size: 0.85rem; }
+.text-xs { font-size: 0.75rem; }
+.text-muted { color: var(--text-secondary); }
+.text-center { text-align: center; }
+.fw-600 { font-weight: 600; }
+.fw-700 { font-weight: 700; }
+.w-full { width: 100%; }
+.overflow-auto { overflow-y: auto; }
+
+/* ===== ALLERGEN BADGE ===== */
+.allergen-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 8px; border-radius: 4px; font-size: 0.7rem;
+  font-weight: 600; background: rgba(239,68,68,0.1); color: var(--danger);
+  border: 1px solid rgba(239,68,68,0.2);
+}
+
+/* ===== TRANSFORMATION LEVEL ===== */
+.nova-group {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 600;
+}
+.nova-1 { background: rgba(30,143,78,0.1); color: var(--nutri-a); }
+.nova-2 { background: rgba(133,187,47,0.1); color: var(--nutri-b); }
+.nova-3 { background: rgba(254,203,2,0.1); color: #b8860b; }
+.nova-4 { background: rgba(230,62,17,0.1); color: var(--nutri-e); }
+
+/* ===== LANDSCAPE ADJUSTMENTS ===== */
+@media (min-width: 768px) {
+  .page { max-width: 600px; margin: 0 auto; }
+  .bottom-nav { max-width: 600px; left: 50%; transform: translateX(-50%); border-radius: 16px 16px 0 0; }
+  .modal { border-radius: var(--radius-lg); margin-bottom: 20px; }
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+
+<!-- ===== HEADER ===== -->
+<header class="header">
+  <div class="header-title" id="headerTitle">NutriScan</div>
+  <div class="header-actions">
+    <button class="header-btn" onclick="toggleTheme()" title="Changer le thème">
+      <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+    <button class="header-btn" onclick="openSettings()" title="Paramètres">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
+</header>
+
+<!-- ===== TOAST CONTAINER ===== -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ===== PAGE: HOME ===== -->
+<div class="page active" id="page-home">
+  <div style="margin-bottom:20px">
+    <h1 style="font-size:1.6rem;font-weight:800;margin-bottom:4px">Bonjour !</h1>
+    <p class="text-muted text-sm">Scannez, comparez et mangez mieux.</p>
+  </div>
+
+  <div class="search-bar" onclick="navigateTo('search')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <input type="text" id="homeSearchInput" placeholder="Rechercher un produit, une marque..." oninput="handleHomeSearch(this.value)">
+  </div>
+
+  <div class="stat-grid">
+    <div class="stat-card">
+      <div class="stat-value" id="statScans">0</div>
+      <div class="stat-label">Produits scannés</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statFridge">0</div>
+      <div class="stat-label">Dans le frigo</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statFavorites">0</div>
+      <div class="stat-label">Favoris</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="statShop">0</div>
+      <div class="stat-label">Articles à acheter</div>
+    </div>
+  </div>
+
+  <div id="expiryAlerts" style="display:none" class="mb-16">
+    <div class="section-title">Alertes péremption</div>
+    <div id="expiryAlertsList"></div>
+  </div>
+
+  <div class="section-title">Derniers scans <span class="count" id="historyCount"></span></div>
+  <div id="recentScans">
+    <div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M7 7h.01M7 12h.01M7 17h.01M12 7h5M12 12h5M12 17h5"/></svg>
+      <h3>Aucun scan récent</h3>
+      <p>Commencez par scanner un produit alimentaire</p>
+      <button class="btn btn-primary" onclick="navigateTo('scan')">Scanner un produit</button>
+    </div>
+  </div>
+
+  <div id="homeSearchResults" style="display:none" class="mt-16">
+    <div class="section-title">Résultats de recherche</div>
+    <div id="homeSearchResultsList"></div>
+  </div>
+</div>
+
+<!-- ===== PAGE: SCAN ===== -->
+<div class="page" id="page-scan">
+  <div class="scanner-modes">
+    <button class="scanner-mode-btn active" data-mode="barcode" onclick="setScanMode('barcode')">Code-barres</button>
+    <button class="scanner-mode-btn" data-mode="ocr" onclick="setScanMode('ocr')">OCR</button>
+    <button class="scanner-mode-btn" data-mode="visual" onclick="setScanMode('visual')">Visuel</button>
+    <button class="scanner-mode-btn" data-mode="manual" onclick="setScanMode('manual')">Manuel</button>
+  </div>
+
+  <div id="scannerView">
+    <div class="scanner-container" id="scannerContainer">
+      <video id="scannerVideo" autoplay playsinline muted></video>
+      <div class="scanner-overlay">
+        <div class="scan-frame">
+          <div class="scan-line"></div>
+        </div>
+      </div>
+    </div>
+    <div id="scanStatus" class="text-center text-sm text-muted mb-8">
+      Positionnez le code-barres dans le cadre
+    </div>
+  </div>
+
+  <div id="manualSearchView" style="display:none">
+    <div class="search-bar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="manualSearchInput" placeholder="Nom du produit, marque ou code-barres..." onkeydown="if(event.key==='Enter')searchProduct(this.value)">
+    </div>
+    <button class="btn btn-primary btn-block mb-16" onclick="searchProduct(document.getElementById('manualSearchInput').value)">Rechercher</button>
+  </div>
+
+  <div id="scanResults"></div>
+</div>
+
+<!-- ===== PAGE: PRODUCT DETAIL ===== -->
+<div class="page" id="page-product">
+  <button class="btn btn-ghost mb-8" onclick="goBack()" style="align-self:flex-start">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Retour
+  </button>
+  <div id="productDetail"></div>
+</div>
+
+<!-- ===== PAGE: FRIDGE ===== -->
+<div class="page" id="page-fridge">
+  <div class="section-title">
+    Mon Frigo
+    <button class="btn btn-primary btn-sm" onclick="openAddFridgeModal()">+ Ajouter</button>
+  </div>
+
+  <div class="tabs" id="fridgeTabs">
+    <button class="tab active" data-tab="all" onclick="setFridgeTab('all')">Tout</button>
+    <button class="tab" data-tab="expiring" onclick="setFridgeTab('expiring')">Bientôt périmé</button>
+    <button class="tab" data-tab="expired" onclick="setFridgeTab('expired')">Périmé</button>
+  </div>
+
+  <div id="fridgeList">
+    <div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="4" y1="10" x2="20" y2="10"/><line x1="10" y1="6" x2="10" y2="6.01"/><line x1="10" y1="14" x2="10" y2="14.01"/></svg>
+      <h3>Votre frigo est vide</h3>
+      <p>Ajoutez des ingrédients ou scannez des produits</p>
+      <button class="btn btn-primary" onclick="openAddFridgeModal()">Ajouter un ingrédient</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: MEALS ===== -->
+<div class="page" id="page-meals">
+  <div class="section-title">Propositions de repas</div>
+
+  <div class="filter-bar" id="mealFilters">
+    <button class="filter-chip active" data-filter="all" onclick="setMealFilter('all')">Tous</button>
+    <button class="filter-chip" data-filter="quick" onclick="setMealFilter('quick')">Rapide</button>
+    <button class="filter-chip" data-filter="healthy" onclick="setMealFilter('healthy')">Healthy</button>
+    <button class="filter-chip" data-filter="budget" onclick="setMealFilter('budget')">Budget</button>
+    <button class="filter-chip" data-filter="lowcal" onclick="setMealFilter('lowcal')">Low Cal</button>
+  </div>
+
+  <div id="mealSuggestions">
+    <div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+      <h3>Aucune suggestion</h3>
+      <p>Ajoutez des ingrédients dans votre frigo pour recevoir des propositions de repas</p>
+      <button class="btn btn-primary" onclick="navigateTo('fridge')">Remplir mon frigo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: SHOPPING LIST ===== -->
+<div class="page" id="page-shopping">
+  <div class="section-title">
+    Liste de courses
+    <div class="flex gap-8">
+      <button class="btn btn-sm btn-secondary" onclick="exportShoppingList()" title="Exporter">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      </button>
+      <button class="btn btn-primary btn-sm" onclick="openAddShoppingModal()">+ Ajouter</button>
+    </div>
+  </div>
+
+  <div id="shoppingListContent">
+    <div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      <h3>Liste vide</h3>
+      <p>Ajoutez des articles ou générez une liste depuis les recettes</p>
+      <button class="btn btn-primary" onclick="openAddShoppingModal()">Ajouter un article</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: HISTORY ===== -->
+<div class="page" id="page-history">
+  <button class="btn btn-ghost mb-8" onclick="navigateTo('home')" style="align-self:flex-start">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Retour
+  </button>
+  <div class="section-title">Historique des scans <span class="count" id="fullHistoryCount"></span></div>
+  <div id="historyList"></div>
+</div>
+
+<!-- ===== PAGE: FAVORITES ===== -->
+<div class="page" id="page-favorites">
+  <button class="btn btn-ghost mb-8" onclick="navigateTo('home')" style="align-self:flex-start">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Retour
+  </button>
+  <div class="section-title">Mes Favoris <span class="count" id="favCount"></span></div>
+  <div id="favoritesList"></div>
+</div>
+
+<!-- ===== PAGE: COMPARE ===== -->
+<div class="page" id="page-compare">
+  <button class="btn btn-ghost mb-8" onclick="navigateTo('home')" style="align-self:flex-start">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Retour
+  </button>
+  <div class="section-title">Comparer des produits</div>
+  <div id="compareContent">
+    <div class="empty-state">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      <h3>Aucun produit à comparer</h3>
+      <p>Ajoutez des produits depuis leur fiche détaillée</p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== PAGE: SEARCH ===== -->
+<div class="page" id="page-search">
+  <div class="search-bar">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <input type="text" id="searchPageInput" placeholder="Rechercher par nom, marque ou ingrédient..." onkeydown="if(event.key==='Enter')fullSearch(this.value)" autofocus>
+  </div>
+  <button class="btn btn-primary btn-block mb-16" onclick="fullSearch(document.getElementById('searchPageInput').value)">Rechercher</button>
+  <div id="searchPageResults"></div>
+</div>
+
+<!-- ===== PAGE: SETTINGS ===== -->
+<div class="page" id="page-settings">
+  <button class="btn btn-ghost mb-8" onclick="navigateTo('home')" style="align-self:flex-start">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Retour
+  </button>
+  <div class="section-title">Paramètres</div>
+
+  <div class="card mb-16">
+    <div class="card-title mb-8">Apparence</div>
+    <div class="switch-row">
+      <label>Mode sombre</label>
+      <div class="switch" id="darkModeSwitch" onclick="toggleTheme()"></div>
+    </div>
+  </div>
+
+  <div class="card mb-16">
+    <div class="card-title mb-8">Régime alimentaire</div>
+    <div id="dietOptions" style="display:flex;flex-wrap:wrap;gap:8px">
+      <button class="filter-chip" data-diet="vegetarian" onclick="toggleDiet('vegetarian')">Végétarien</button>
+      <button class="filter-chip" data-diet="vegan" onclick="toggleDiet('vegan')">Végan</button>
+      <button class="filter-chip" data-diet="gluten-free" onclick="toggleDiet('gluten-free')">Sans gluten</button>
+      <button class="filter-chip" data-diet="lactose-free" onclick="toggleDiet('lactose-free')">Sans lactose</button>
+      <button class="filter-chip" data-diet="low-sugar" onclick="toggleDiet('low-sugar')">Moins de sucre</button>
+      <button class="filter-chip" data-diet="high-protein" onclick="toggleDiet('high-protein')">Riche en protéines</button>
+    </div>
+  </div>
+
+  <div class="card mb-16">
+    <div class="card-title mb-8">Allergies</div>
+    <div id="allergyOptions" style="display:flex;flex-wrap:wrap;gap:8px">
+      <button class="filter-chip" data-allergy="gluten" onclick="toggleAllergy('gluten')">Gluten</button>
+      <button class="filter-chip" data-allergy="milk" onclick="toggleAllergy('milk')">Lait</button>
+      <button class="filter-chip" data-allergy="eggs" onclick="toggleAllergy('eggs')">Œufs</button>
+      <button class="filter-chip" data-allergy="nuts" onclick="toggleAllergy('nuts')">Fruits à coque</button>
+      <button class="filter-chip" data-allergy="peanuts" onclick="toggleAllergy('peanuts')">Arachides</button>
+      <button class="filter-chip" data-allergy="soy" onclick="toggleAllergy('soy')">Soja</button>
+      <button class="filter-chip" data-allergy="fish" onclick="toggleAllergy('fish')">Poisson</button>
+      <button class="filter-chip" data-allergy="shellfish" onclick="toggleAllergy('shellfish')">Crustacés</button>
+    </div>
+  </div>
+
+  <div class="card mb-16">
+    <div class="card-title mb-8">Données</div>
+    <button class="btn btn-secondary btn-block mb-8" onclick="exportAllData()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Exporter toutes les données
+    </button>
+    <button class="btn btn-secondary btn-block mb-8" onclick="document.getElementById('importFile').click()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      Importer des données
+    </button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importAllData(event)">
+    <button class="btn btn-danger btn-block" onclick="clearAllData()">Effacer toutes les données</button>
+  </div>
+
+  <div class="text-center text-xs text-muted mt-16">
+    NutriScan v1.0 — Données : Open Food Facts<br>
+    Application locale, aucune donnée envoyée à un serveur.
+  </div>
+</div>
+
+<!-- ===== BOTTOM NAVIGATION ===== -->
+<nav class="bottom-nav">
+  <button class="nav-item active" data-page="home" onclick="navigateTo('home')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+    <span>Accueil</span>
+  </button>
+  <button class="nav-item" data-page="fridge" onclick="navigateTo('fridge')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="4" y1="10" x2="20" y2="10"/><line x1="10" y1="6" x2="10" y2="6.01"/><line x1="10" y1="14" x2="10" y2="14.01"/></svg>
+    <span>Frigo</span>
+    <span class="badge" id="fridgeBadge" style="display:none">0</span>
+  </button>
+  <button class="scan-nav-btn" onclick="navigateTo('scan')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+  </button>
+  <button class="nav-item" data-page="meals" onclick="navigateTo('meals')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+    <span>Repas</span>
+  </button>
+  <button class="nav-item" data-page="shopping" onclick="navigateTo('shopping')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+    <span>Courses</span>
+    <span class="badge" id="shopBadge" style="display:none">0</span>
+  </button>
+</nav>
+
+<!-- ===== MODAL: ADD FRIDGE ITEM ===== -->
+<div class="modal-overlay" id="addFridgeModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Ajouter au frigo</div>
+    <div class="input-group">
+      <label>Nom du produit / ingrédient</label>
+      <input type="text" id="fridgeItemName" placeholder="Ex: Tomates, Poulet, Lait...">
+    </div>
+    <div class="flex gap-8">
+      <div class="input-group" style="flex:1">
+        <label>Quantité</label>
+        <input type="number" id="fridgeItemQty" value="1" min="0" step="0.1">
+      </div>
+      <div class="input-group" style="flex:1">
+        <label>Unité</label>
+        <select id="fridgeItemUnit">
+          <option value="pièce(s)">pièce(s)</option>
+          <option value="g">g</option>
+          <option value="kg">kg</option>
+          <option value="ml">ml</option>
+          <option value="L">L</option>
+          <option value="sachet(s)">sachet(s)</option>
+          <option value="boîte(s)">boîte(s)</option>
+          <option value="tranche(s)">tranche(s)</option>
+        </select>
+      </div>
+    </div>
+    <div class="input-group">
+      <label>Catégorie</label>
+      <select id="fridgeItemCategory">
+        <option value="fruits-legumes">Fruits & Légumes</option>
+        <option value="viande-poisson">Viande & Poisson</option>
+        <option value="produits-laitiers">Produits laitiers</option>
+        <option value="cereales-feculents">Céréales & Féculents</option>
+        <option value="epicerie">Épicerie</option>
+        <option value="boissons">Boissons</option>
+        <option value="surgeles">Surgelés</option>
+        <option value="condiments">Condiments & Sauces</option>
+        <option value="autre">Autre</option>
+      </select>
+    </div>
+    <div class="input-group">
+      <label>Date de péremption</label>
+      <input type="date" id="fridgeItemExpiry">
+    </div>
+    <div class="flex gap-8 mt-8">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeModal('addFridgeModal')">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="addFridgeItem()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: ADD SHOPPING ITEM ===== -->
+<div class="modal-overlay" id="addShoppingModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Ajouter un article</div>
+    <div class="input-group">
+      <label>Article</label>
+      <input type="text" id="shopItemName" placeholder="Ex: Pain, Beurre, Pommes...">
+    </div>
+    <div class="flex gap-8">
+      <div class="input-group" style="flex:1">
+        <label>Quantité</label>
+        <input type="number" id="shopItemQty" value="1" min="1">
+      </div>
+      <div class="input-group" style="flex:1">
+        <label>Unité</label>
+        <select id="shopItemUnit">
+          <option value="">—</option>
+          <option value="g">g</option>
+          <option value="kg">kg</option>
+          <option value="ml">ml</option>
+          <option value="L">L</option>
+          <option value="pièce(s)">pièce(s)</option>
+          <option value="sachet(s)">sachet(s)</option>
+          <option value="boîte(s)">boîte(s)</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex gap-8 mt-8">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeModal('addShoppingModal')">Annuler</button>
+      <button class="btn btn-primary" style="flex:1" onclick="addShoppingItem()">Ajouter</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: RECIPE DETAIL ===== -->
+<div class="modal-overlay" id="recipeDetailModal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div id="recipeDetailContent"></div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<!-- ===== EXTERNAL LIBRARIES ===== -->
+<script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+<script>
+/* ==========================================================================
+   NutriScan — Complete Single-File Food Scanner Web App
+   ========================================================================== */
+
+// ===== STATE MANAGEMENT =====
+const DB_KEYS = {
+  history: 'ns_history',
+  favorites: 'ns_favorites',
+  fridge: 'ns_fridge',
+  shopping: 'ns_shopping',
+  compare: 'ns_compare',
+  settings: 'ns_settings',
+};
+
+function loadState(key, fallback = []) {
+  try { return JSON.parse(localStorage.getItem(key)) || fallback; }
+  catch { return fallback; }
+}
+function saveState(key, data) {
+  localStorage.setItem(key, JSON.stringify(data));
+}
+
+let state = {
+  history: loadState(DB_KEYS.history),
+  favorites: loadState(DB_KEYS.favorites),
+  fridge: loadState(DB_KEYS.fridge),
+  shopping: loadState(DB_KEYS.shopping),
+  compare: loadState(DB_KEYS.compare),
+  settings: loadState(DB_KEYS.settings, { theme: 'light', diets: [], allergies: [] }),
+  currentProduct: null,
+  currentPage: 'home',
+  previousPage: 'home',
+  scanMode: 'barcode',
+  scannerActive: false,
+};
+
+function persist() {
+  saveState(DB_KEYS.history, state.history);
+  saveState(DB_KEYS.favorites, state.favorites);
+  saveState(DB_KEYS.fridge, state.fridge);
+  saveState(DB_KEYS.shopping, state.shopping);
+  saveState(DB_KEYS.compare, state.compare);
+  saveState(DB_KEYS.settings, state.settings);
+}
+
+// ===== THEME =====
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  state.settings.theme = theme;
+  const sw = document.getElementById('darkModeSwitch');
+  if (sw) sw.classList.toggle('active', theme === 'dark');
+  const icon = document.getElementById('themeIcon');
+  if (icon) {
+    icon.innerHTML = theme === 'dark'
+      ? '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>'
+      : '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>';
+  }
+  persist();
+}
+function toggleTheme() {
+  applyTheme(state.settings.theme === 'dark' ? 'light' : 'dark');
+}
+
+// ===== TOAST =====
+function showToast(msg, type = '') {
+  const container = document.getElementById('toastContainer');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type}`;
+  toast.textContent = msg;
+  container.appendChild(toast);
+  setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translateY(-10px)'; setTimeout(() => toast.remove(), 300); }, 2500);
+}
+
+// ===== NAVIGATION =====
+function navigateTo(page) {
+  if (page === state.currentPage && page !== 'scan') return;
+  state.previousPage = state.currentPage;
+  state.currentPage = page;
+
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById(`page-${page}`);
+  if (target) target.classList.add('active');
+
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page === page));
+
+  if (page === 'scan') startScanner();
+  else stopScanner();
+
+  if (page === 'home') refreshHome();
+  if (page === 'fridge') renderFridge();
+  if (page === 'meals') generateMealSuggestions();
+  if (page === 'shopping') renderShoppingList();
+  if (page === 'history') renderHistory();
+  if (page === 'favorites') renderFavorites();
+  if (page === 'compare') renderCompare();
+
+  updateHeaderTitle(page);
+  window.scrollTo(0, 0);
+}
+
+function goBack() {
+  navigateTo(state.previousPage || 'home');
+}
+
+function updateHeaderTitle(page) {
+  const titles = { home: 'NutriScan', scan: 'Scanner', product: 'Fiche produit', fridge: 'Mon Frigo', meals: 'Repas', shopping: 'Courses', history: 'Historique', favorites: 'Favoris', compare: 'Comparaison', settings: 'Paramètres', search: 'Recherche' };
+  document.getElementById('headerTitle').textContent = titles[page] || 'NutriScan';
+}
+
+function openSettings() { navigateTo('settings'); }
+
+// ===== MODALS =====
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+function openAddFridgeModal() { openModal('addFridgeModal'); }
+function openAddShoppingModal() { openModal('addShoppingModal'); }
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('active'); });
+});
+
+// ===== CATEGORY EMOJIS =====
+const CATEGORY_EMOJI = {
+  'fruits-legumes': '🥬', 'viande-poisson': '🥩', 'produits-laitiers': '🧀',
+  'cereales-feculents': '🌾', 'epicerie': '🥫', 'boissons': '🥤',
+  'surgeles': '🧊', 'condiments': '🧂', 'autre': '📦',
+};
+
+// ===== OPEN FOOD FACTS API =====
+const OFF_API = 'https://world.openfoodfacts.org';
+
+async function fetchProductByBarcode(barcode) {
+  try {
+    const res = await fetch(`${OFF_API}/api/v2/product/${barcode}.json`);
+    const data = await res.json();
+    if (data.status === 1) return normalizeProduct(data.product);
+    return null;
+  } catch (e) {
+    console.error('OFF API error:', e);
+    return null;
+  }
+}
+
+async function searchProducts(query, page = 1) {
+  try {
+    const res = await fetch(`${OFF_API}/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page=${page}&page_size=20&fields=code,product_name,brands,image_front_small_url,nutriscore_grade,nova_group,nutriments,quantity,ingredients_text,allergens_tags,categories,nutrition_grades`);
+    const data = await res.json();
+    return (data.products || []).filter(p => p.product_name).map(normalizeProduct);
+  } catch (e) {
+    console.error('Search error:', e);
+    return [];
+  }
+}
+
+function normalizeProduct(p) {
+  const n = p.nutriments || {};
+  return {
+    id: p.code || p._id || Date.now().toString(),
+    barcode: p.code || '',
+    name: p.product_name || p.product_name_fr || 'Produit inconnu',
+    brand: p.brands || '',
+    image: p.image_front_small_url || p.image_front_url || p.image_url || '',
+    quantity: p.quantity || '',
+    nutriScore: (p.nutriscore_grade || p.nutrition_grades || '').toUpperCase(),
+    novaGroup: p.nova_group || null,
+    categories: p.categories || '',
+    ingredients: p.ingredients_text || p.ingredients_text_fr || '',
+    allergens: (p.allergens_tags || []).map(a => a.replace('en:', '')),
+    nutrients: {
+      energy_kcal: n['energy-kcal_100g'] ?? n['energy-kcal'] ?? null,
+      energy_kj: n['energy-kj_100g'] ?? n['energy-kj'] ?? null,
+      fat: n.fat_100g ?? n.fat ?? null,
+      saturated_fat: n['saturated-fat_100g'] ?? n['saturated-fat'] ?? null,
+      carbs: n.carbohydrates_100g ?? n.carbohydrates ?? null,
+      sugars: n.sugars_100g ?? n.sugars ?? null,
+      added_sugars: n['added-sugars_100g'] ?? null,
+      fiber: n.fiber_100g ?? n.fiber ?? null,
+      proteins: n.proteins_100g ?? n.proteins ?? null,
+      salt: n.salt_100g ?? n.salt ?? null,
+      sodium: n.sodium_100g ?? n.sodium ?? null,
+      energy_kcal_serving: n['energy-kcal_serving'] ?? null,
+      fat_serving: n.fat_serving ?? null,
+      saturated_fat_serving: n['saturated-fat_serving'] ?? null,
+      carbs_serving: n.carbohydrates_serving ?? null,
+      sugars_serving: n.sugars_serving ?? null,
+      fiber_serving: n.fiber_serving ?? null,
+      proteins_serving: n.proteins_serving ?? null,
+      salt_serving: n.salt_serving ?? null,
+      energy_kcal_unit: n['energy-kcal_unit'] ?? null,
+      fat_unit: n.fat_unit ?? null,
+    },
+    serving_size: p.serving_size || '',
+    scannedAt: new Date().toISOString(),
+    source: 'Open Food Facts',
+    confidence: 0.95,
+    method: 'barcode',
+  };
+}
+
+// ===== SCANNER =====
+let quaggaRunning = false;
+
+function startScanner() {
+  if (state.scanMode === 'manual') {
+    document.getElementById('scannerView').style.display = 'none';
+    document.getElementById('manualSearchView').style.display = 'block';
+    return;
+  }
+  document.getElementById('scannerView').style.display = 'block';
+  document.getElementById('manualSearchView').style.display = 'none';
+
+  if (state.scanMode === 'barcode') startBarcodeScanner();
+  else startCameraStream();
+}
+
+function stopScanner() {
+  stopBarcodeScanner();
+  stopCameraStream();
+}
+
+function setScanMode(mode) {
+  state.scanMode = mode;
+  document.querySelectorAll('.scanner-mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+
+  stopScanner();
+  document.getElementById('scanResults').innerHTML = '';
+
+  const statusTexts = {
+    barcode: 'Positionnez le code-barres dans le cadre',
+    ocr: 'Pointez le texte nutritionnel',
+    visual: 'Montrez le produit à la caméra',
+    manual: 'Recherchez un produit par nom ou code-barres',
+  };
+  document.getElementById('scanStatus').textContent = statusTexts[mode] || '';
+
+  if (state.currentPage === 'scan') startScanner();
+}
+
+function startBarcodeScanner() {
+  if (quaggaRunning) return;
+  const container = document.getElementById('scannerContainer');
+
+  if (typeof Quagga === 'undefined') {
+    showToast('Bibliothèque de scan non chargée', 'error');
+    return;
+  }
+
+  Quagga.init({
+    inputStream: {
+      name: 'Live',
+      type: 'LiveStream',
+      target: container,
+      constraints: {
+        facingMode: 'environment',
+        width: { ideal: 1280 },
+        height: { ideal: 720 },
+      },
+    },
+    decoder: {
+      readers: ['ean_reader', 'ean_8_reader', 'upc_reader', 'upc_e_reader', 'code_128_reader'],
+    },
+    locate: true,
+    frequency: 10,
+  }, (err) => {
+    if (err) {
+      console.error('Quagga init error:', err);
+      showToast('Impossible d\'accéder à la caméra', 'error');
+      setScanMode('manual');
+      return;
+    }
+    Quagga.start();
+    quaggaRunning = true;
+  });
+
+  Quagga.onDetected(async (result) => {
+    const code = result.codeResult.code;
+    if (!code) return;
+    Quagga.stop();
+    quaggaRunning = false;
+
+    navigator.vibrate?.(100);
+    document.getElementById('scanStatus').textContent = `Code détecté : ${code}`;
+    showScanLoading();
+
+    const product = await fetchProductByBarcode(code);
+    if (product) {
+      product.method = 'barcode';
+      product.confidence = 0.98;
+      addToHistory(product);
+      showProductDetail(product);
+    } else {
+      showScanNotFound(code);
+    }
+  });
+}
+
+function stopBarcodeScanner() {
+  if (quaggaRunning && typeof Quagga !== 'undefined') {
+    try { Quagga.stop(); } catch {}
+    quaggaRunning = false;
+  }
+}
+
+let cameraStream = null;
+
+async function startCameraStream() {
+  try {
+    const video = document.getElementById('scannerVideo');
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } }
+    });
+    video.srcObject = cameraStream;
+
+    if (state.scanMode === 'ocr') {
+      setTimeout(() => captureAndOCR(), 2000);
+    }
+  } catch (e) {
+    showToast('Impossible d\'accéder à la caméra', 'error');
+    setScanMode('manual');
+  }
+}
+
+function stopCameraStream() {
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
+  }
+  const video = document.getElementById('scannerVideo');
+  if (video) video.srcObject = null;
+}
+
+async function captureAndOCR() {
+  if (state.scanMode !== 'ocr' || state.currentPage !== 'scan') return;
+
+  const video = document.getElementById('scannerVideo');
+  if (!video || !video.videoWidth) { setTimeout(() => captureAndOCR(), 1000); return; }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  const imageData = canvas.toDataURL('image/png');
+
+  document.getElementById('scanStatus').textContent = 'Analyse du texte en cours...';
+
+  try {
+    if (typeof Tesseract === 'undefined') {
+      showToast('Bibliothèque OCR non chargée', 'error');
+      return;
+    }
+    const worker = await Tesseract.createWorker('fra');
+    const { data } = await worker.recognize(imageData);
+    await worker.terminate();
+
+    const text = data.text.trim();
+    if (text.length > 10) {
+      const parsed = parseNutritionalText(text);
+      showOCRResult(text, parsed, data.confidence / 100);
+    } else {
+      document.getElementById('scanStatus').textContent = 'Aucun texte détecté, réessayez...';
+      setTimeout(() => captureAndOCR(), 3000);
+    }
+  } catch (e) {
+    console.error('OCR error:', e);
+    document.getElementById('scanStatus').textContent = 'Erreur OCR, réessayez...';
+    setTimeout(() => captureAndOCR(), 3000);
+  }
+}
+
+function parseNutritionalText(text) {
+  const lines = text.toLowerCase();
+  const extract = (patterns) => {
+    for (const p of patterns) {
+      const m = lines.match(p);
+      if (m) return parseFloat(m[1].replace(',', '.'));
+    }
+    return null;
+  };
+
+  return {
+    energy_kcal: extract([/(\d+[,.]?\d*)\s*kcal/, /[eé]nergie[^0-9]*(\d+[,.]?\d*)/]),
+    fat: extract([/mati[eèé]res?\s*grasses?[^0-9]*(\d+[,.]?\d*)/i, /lipides?[^0-9]*(\d+[,.]?\d*)/i, /fat[^0-9]*(\d+[,.]?\d*)/i]),
+    saturated_fat: extract([/satur[eé][^0-9]*(\d+[,.]?\d*)/i, /dont\s*acides\s*gras\s*satur[eé]s[^0-9]*(\d+[,.]?\d*)/i]),
+    carbs: extract([/glucides?[^0-9]*(\d+[,.]?\d*)/i, /carb[^0-9]*(\d+[,.]?\d*)/i]),
+    sugars: extract([/sucres?[^0-9]*(\d+[,.]?\d*)/i, /sugar[^0-9]*(\d+[,.]?\d*)/i]),
+    fiber: extract([/fibres?[^0-9]*(\d+[,.]?\d*)/i]),
+    proteins: extract([/prot[eé]ines?[^0-9]*(\d+[,.]?\d*)/i, /protein[^0-9]*(\d+[,.]?\d*)/i]),
+    salt: extract([/sel[^0-9]*(\d+[,.]?\d*)/i, /salt[^0-9]*(\d+[,.]?\d*)/i]),
+    sodium: extract([/sodium[^0-9]*(\d+[,.]?\d*)/i]),
+  };
+}
+
+function showOCRResult(rawText, parsed, confidence) {
+  const container = document.getElementById('scanResults');
+  const product = {
+    id: 'ocr_' + Date.now(),
+    name: 'Produit détecté par OCR',
+    brand: '',
+    image: '',
+    barcode: '',
+    quantity: '',
+    nutriScore: '',
+    novaGroup: null,
+    categories: '',
+    ingredients: '',
+    allergens: [],
+    nutrients: parsed,
+    serving_size: '',
+    scannedAt: new Date().toISOString(),
+    source: 'OCR',
+    confidence: confidence,
+    method: 'ocr',
+  };
+
+  container.innerHTML = `
+    <div class="scanner-result">
+      <div class="flex items-center justify-between mb-8">
+        <div class="fw-600">Texte nutritionnel détecté</div>
+        <div class="confidence">
+          <span>${Math.round(confidence * 100)}%</span>
+          <div class="confidence-bar"><div class="confidence-fill" style="width:${confidence * 100}%;background:${confidence > 0.7 ? 'var(--secondary)' : 'var(--warning)'}"></div></div>
+        </div>
+      </div>
+      <div class="text-sm text-muted mb-8" style="max-height:80px;overflow:auto;font-family:monospace;font-size:0.7rem">${rawText.substring(0, 300)}</div>
+      ${renderMiniNutrients(parsed)}
+      <div class="flex gap-8 mt-8">
+        <button class="btn btn-primary btn-sm" style="flex:1" onclick='showProductDetail(${JSON.stringify(product).replace(/'/g, "&#39;")})'>Voir la fiche</button>
+        <button class="btn btn-secondary btn-sm" onclick="captureAndOCR()">Rescanner</button>
+      </div>
+    </div>
+  `;
+  document.getElementById('scanStatus').textContent = 'Texte analysé avec succès';
+}
+
+function renderMiniNutrients(n) {
+  const items = [
+    { label: 'Calories', value: n.energy_kcal, unit: 'kcal' },
+    { label: 'Graisses', value: n.fat, unit: 'g' },
+    { label: 'Glucides', value: n.carbs, unit: 'g' },
+    { label: 'Protéines', value: n.proteins, unit: 'g' },
+  ];
+  return `<div class="flex gap-8" style="flex-wrap:wrap">${items.filter(i => i.value !== null).map(i =>
+    `<div class="chip chip-info">${i.label}: ${formatNum(i.value)}${i.unit}</div>`
+  ).join('')}</div>`;
+}
+
+function showScanLoading() {
+  document.getElementById('scanResults').innerHTML = `
+    <div class="scanner-result text-center">
+      <div class="spinner" style="margin:0 auto 12px"></div>
+      <div class="text-sm text-muted">Recherche du produit...</div>
+    </div>`;
+}
+
+function showScanNotFound(code) {
+  document.getElementById('scanResults').innerHTML = `
+    <div class="scanner-result">
+      <div class="fw-600 mb-8">Produit non trouvé</div>
+      <p class="text-sm text-muted mb-8">Code : ${code}<br>Ce produit n'est pas dans la base Open Food Facts.</p>
+      <div class="flex gap-8">
+        <button class="btn btn-primary btn-sm" style="flex:1" onclick="startBarcodeScanner()">Rescanner</button>
+        <button class="btn btn-secondary btn-sm" style="flex:1" onclick="setScanMode('manual')">Recherche manuelle</button>
+      </div>
+    </div>`;
+}
+
+async function searchProduct(query) {
+  if (!query.trim()) return;
+  showScanLoading();
+
+  if (/^\d{8,13}$/.test(query.trim())) {
+    const product = await fetchProductByBarcode(query.trim());
+    if (product) {
+      product.method = 'manual';
+      product.confidence = 1;
+      addToHistory(product);
+      showProductDetail(product);
+      return;
+    }
+  }
+
+  const results = await searchProducts(query);
+  if (results.length > 0) {
+    renderSearchResults(results, document.getElementById('scanResults'));
+  } else {
+    document.getElementById('scanResults').innerHTML = `
+      <div class="scanner-result">
+        <div class="fw-600 mb-8">Aucun résultat</div>
+        <p class="text-sm text-muted">Essayez avec un autre terme de recherche.</p>
+      </div>`;
+  }
+}
+
+async function fullSearch(query) {
+  if (!query.trim()) return;
+  const container = document.getElementById('searchPageResults');
+  container.innerHTML = `<div class="text-center"><div class="spinner" style="margin:0 auto"></div></div>`;
+  const results = await searchProducts(query);
+  if (results.length > 0) {
+    renderSearchResults(results, container);
+  } else {
+    container.innerHTML = `<div class="empty-state"><h3>Aucun résultat</h3><p>Essayez un autre terme</p></div>`;
+  }
+}
+
+async function handleHomeSearch(query) {
+  const resultsDiv = document.getElementById('homeSearchResults');
+  const listDiv = document.getElementById('homeSearchResultsList');
+  if (!query || query.length < 3) { resultsDiv.style.display = 'none'; return; }
+  resultsDiv.style.display = 'block';
+  listDiv.innerHTML = `<div class="text-center"><div class="spinner" style="margin:0 auto"></div></div>`;
+
+  const results = await searchProducts(query);
+  if (results.length > 0) {
+    renderSearchResults(results, listDiv);
+  } else {
+    listDiv.innerHTML = `<div class="text-sm text-muted text-center">Aucun résultat</div>`;
+  }
+}
+
+function renderSearchResults(results, container) {
+  container.innerHTML = results.map(p => `
+    <div class="product-card" onclick='showProductDetail(${JSON.stringify(p).replace(/'/g, "&#39;").replace(/</g, "&lt;")})'>
+      <img class="product-card-img" src="${p.image || 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect fill=%22%23e2e8f0%22 width=%2264%22 height=%2264%22/><text x=%2232%22 y=%2236%22 text-anchor=%22middle%22 font-size=%2224%22>🍽</text></svg>'}" alt="${escapeHtml(p.name)}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect fill=%22%23e2e8f0%22 width=%2264%22 height=%2264%22/><text x=%2232%22 y=%2236%22 text-anchor=%22middle%22 font-size=%2224%22>🍽</text></svg>'">
+      <div class="product-card-info">
+        <div class="product-card-name">${escapeHtml(p.name)}</div>
+        <div class="product-card-brand">${escapeHtml(p.brand)} ${p.quantity ? '· ' + escapeHtml(p.quantity) : ''}</div>
+        <div class="product-card-meta">
+          ${p.nutriScore ? `<div class="nutri-score" style="transform:scale(0.7);transform-origin:left">${renderNutriScoreMini(p.nutriScore)}</div>` : ''}
+          ${p.novaGroup ? `<span class="chip nova-${p.novaGroup}">NOVA ${p.novaGroup}</span>` : ''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ===== PRODUCT DETAIL =====
+function showProductDetail(product) {
+  state.currentProduct = product;
+  navigateTo('product');
+
+  const n = product.nutrients || {};
+  const isFav = state.favorites.some(f => f.id === product.id);
+  const inCompare = state.compare.some(c => c.id === product.id);
+  const servingSize = product.serving_size || '—';
+
+  const computeServing = (per100, servingG) => {
+    if (product.nutrients[servingG] != null) return formatNum(product.nutrients[servingG]);
+    if (per100 == null || !product.serving_size) return '—';
+    const gMatch = product.serving_size.match(/(\d+[,.]?\d*)\s*g/i);
+    if (gMatch) return formatNum(per100 * parseFloat(gMatch[1].replace(',', '.')) / 100);
+    return '—';
+  };
+  const computeUnit = (per100) => {
+    if (per100 == null) return '—';
+    return formatNum(per100 / 100);
+  };
+
+  const rows = [
+    ['Énergie', n.energy_kcal, 'kcal', 'energy_kcal_serving', computeUnit(n.energy_kcal)],
+    ['Matières grasses', n.fat, 'g', 'fat_serving', computeUnit(n.fat)],
+    ['  dont saturés', n.saturated_fat, 'g', 'saturated_fat_serving', computeUnit(n.saturated_fat)],
+    ['Glucides', n.carbs, 'g', 'carbs_serving', computeUnit(n.carbs)],
+    ['  dont sucres', n.sugars, 'g', 'sugars_serving', computeUnit(n.sugars)],
+    ['  dont sucres ajoutés', n.added_sugars, 'g', null, computeUnit(n.added_sugars)],
+    ['Fibres', n.fiber, 'g', 'fiber_serving', computeUnit(n.fiber)],
+    ['Protéines', n.proteins, 'g', 'proteins_serving', computeUnit(n.proteins)],
+    ['Sel', n.salt, 'g', 'salt_serving', computeUnit(n.salt)],
+    ['Sodium', n.sodium, 'g', null, computeUnit(n.sodium)],
+  ];
+
+  const allergenLabels = { gluten: 'Gluten', milk: 'Lait', eggs: 'Œufs', nuts: 'Fruits à coque', peanuts: 'Arachides', soy: 'Soja', fish: 'Poisson', shellfish: 'Crustacés', celery: 'Céleri', mustard: 'Moutarde', sesame: 'Sésame', sulphites: 'Sulfites', lupin: 'Lupin', molluscs: 'Mollusques' };
+
+  document.getElementById('productDetail').innerHTML = `
+    <div class="card mb-16">
+      <div class="flex gap-12 items-center mb-8">
+        ${product.image ? `<img src="${product.image}" style="width:80px;height:80px;border-radius:var(--radius-sm);object-fit:cover" onerror="this.style.display='none'">` : ''}
+        <div style="flex:1">
+          <h2 style="font-size:1.2rem;font-weight:700;margin-bottom:4px">${escapeHtml(product.name)}</h2>
+          <div class="text-sm text-muted">${escapeHtml(product.brand)}</div>
+          ${product.quantity ? `<div class="text-sm text-muted">${escapeHtml(product.quantity)}</div>` : ''}
+        </div>
+      </div>
+
+      <div class="flex gap-8 mb-8">
+        ${product.nutriScore ? `<div class="nutri-score">${renderNutriScore(product.nutriScore)}</div>` : ''}
+        ${product.novaGroup ? `<div class="nova-group nova-${product.novaGroup}">NOVA ${product.novaGroup} — ${novaLabel(product.novaGroup)}</div>` : ''}
+      </div>
+
+      <div class="flex gap-8 mb-8">
+        <div class="confidence">
+          <span class="text-xs text-muted">Confiance :</span>
+          <span class="fw-600">${Math.round((product.confidence || 0) * 100)}%</span>
+          <div class="confidence-bar" style="width:60px"><div class="confidence-fill" style="width:${(product.confidence || 0) * 100}%"></div></div>
+        </div>
+        <span class="chip chip-info">${product.method === 'barcode' ? 'Code-barres' : product.method === 'ocr' ? 'OCR' : product.method === 'visual' ? 'Visuel' : 'Manuel'}</span>
+      </div>
+
+      <div class="flex gap-8">
+        <button class="btn btn-sm ${isFav ? 'btn-danger' : 'btn-secondary'}" onclick="toggleFavorite('${product.id}')">
+          ${isFav ? '★ Retirer des favoris' : '☆ Ajouter aux favoris'}
+        </button>
+        <button class="btn btn-sm ${inCompare ? 'btn-warning' : 'btn-secondary'}" onclick="toggleCompare('${product.id}')" style="${inCompare ? 'background:var(--accent);color:white' : ''}">
+          ${inCompare ? '✓ Dans la comparaison' : '⇄ Comparer'}
+        </button>
+        <button class="btn btn-sm btn-success" onclick="addProductToFridge('${product.id}')">+ Frigo</button>
+      </div>
+    </div>
+
+    <div class="card mb-16">
+      <div class="card-title mb-8">Valeurs nutritionnelles</div>
+      <div class="text-xs text-muted mb-8">Portion : ${escapeHtml(servingSize)}</div>
+      <div style="overflow-x:auto">
+        <table class="nutri-table">
+          <thead>
+            <tr><td>Nutriment</td><td>100g/ml</td><td>Portion</td><td>1 unité</td></tr>
+          </thead>
+          <tbody>
+            ${rows.map(([label, per100, unit, servKey, perUnit]) => `
+              <tr>
+                <td>${label}</td>
+                <td>${per100 != null ? formatNum(per100) + ' ' + unit : '—'}</td>
+                <td>${servKey ? computeServing(per100, servKey) + (per100 != null ? ' ' + unit : '') : '—'}</td>
+                <td>${perUnit !== '—' ? perUnit + ' ' + unit : '—'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    ${product.ingredients ? `
+    <div class="card mb-16">
+      <div class="card-title mb-8">Ingrédients</div>
+      <p class="text-sm" style="line-height:1.6">${escapeHtml(product.ingredients)}</p>
+    </div>` : ''}
+
+    ${product.allergens.length > 0 ? `
+    <div class="card mb-16">
+      <div class="card-title mb-8">Allergènes</div>
+      <div class="flex gap-8" style="flex-wrap:wrap">
+        ${product.allergens.map(a => `<span class="allergen-badge">${allergenLabels[a] || a}</span>`).join('')}
+      </div>
+    </div>` : ''}
+
+    ${product.categories ? `
+    <div class="card mb-16">
+      <div class="card-title mb-8">Catégorie</div>
+      <p class="text-sm text-muted">${escapeHtml(product.categories)}</p>
+    </div>` : ''}
+
+    <div class="card mb-16">
+      <div class="card-title mb-8">Alternatives plus saines</div>
+      <div id="alternatives"><div class="text-center"><div class="spinner" style="margin:0 auto"></div></div></div>
+    </div>
+
+    <div class="text-xs text-muted text-center mt-8 mb-16">
+      Source : ${product.source} · Scanné le ${new Date(product.scannedAt).toLocaleDateString('fr-FR')}
+    </div>
+  `;
+
+  loadAlternatives(product);
+}
+
+async function loadAlternatives(product) {
+  const container = document.getElementById('alternatives');
+  if (!product.categories) {
+    container.innerHTML = '<p class="text-sm text-muted">Aucune alternative trouvée</p>';
+    return;
+  }
+
+  const cat = product.categories.split(',')[0].trim();
+  try {
+    const res = await fetch(`${OFF_API}/cgi/search.pl?search_terms=${encodeURIComponent(cat)}&search_simple=1&action=process&json=1&page_size=10&sort_by=nutriscore_score&fields=code,product_name,brands,image_front_small_url,nutriscore_grade,nutriments`);
+    const data = await res.json();
+    const alts = (data.products || [])
+      .filter(p => p.product_name && p.code !== product.barcode && p.nutriscore_grade)
+      .map(normalizeProduct)
+      .filter(p => p.nutriScore && p.nutriScore <= (product.nutriScore || 'E'))
+      .slice(0, 5);
+
+    if (alts.length === 0) {
+      container.innerHTML = '<p class="text-sm text-muted">Aucune alternative trouvée</p>';
+      return;
+    }
+    renderSearchResults(alts, container);
+  } catch {
+    container.innerHTML = '<p class="text-sm text-muted">Erreur lors de la recherche d\'alternatives</p>';
+  }
+}
+
+// ===== NUTRI-SCORE RENDERING =====
+function renderNutriScore(grade) {
+  return ['A','B','C','D','E'].map(g =>
+    `<div class="nutri-score-item ns-${g.toLowerCase()} ${grade === g ? 'active' : ''}">${g}</div>`
+  ).join('');
+}
+function renderNutriScoreMini(grade) {
+  return ['A','B','C','D','E'].map(g =>
+    `<div class="nutri-score-item ns-${g.toLowerCase()} ${grade === g ? 'active' : ''}" style="width:20px;height:20px;font-size:0.6rem">${g}</div>`
+  ).join('');
+}
+function novaLabel(group) {
+  const labels = { 1: 'Non transformé', 2: 'Ingrédients culinaires', 3: 'Aliments transformés', 4: 'Ultra-transformé' };
+  return labels[group] || '';
+}
+
+// ===== HISTORY & FAVORITES =====
+function addToHistory(product) {
+  state.history = state.history.filter(h => h.id !== product.id);
+  state.history.unshift({ ...product, scannedAt: new Date().toISOString() });
+  if (state.history.length > 100) state.history = state.history.slice(0, 100);
+  persist();
+}
+
+function toggleFavorite(productId) {
+  const idx = state.favorites.findIndex(f => f.id === productId);
+  if (idx >= 0) {
+    state.favorites.splice(idx, 1);
+    showToast('Retiré des favoris');
+  } else {
+    const product = state.currentProduct || state.history.find(h => h.id === productId);
+    if (product) {
+      state.favorites.unshift(product);
+      showToast('Ajouté aux favoris', 'success');
+    }
+  }
+  persist();
+  if (state.currentProduct) showProductDetail(state.currentProduct);
+}
+
+function toggleCompare(productId) {
+  const idx = state.compare.findIndex(c => c.id === productId);
+  if (idx >= 0) {
+    state.compare.splice(idx, 1);
+    showToast('Retiré de la comparaison');
+  } else {
+    if (state.compare.length >= 4) {
+      showToast('Maximum 4 produits à comparer', 'error');
+      return;
+    }
+    const product = state.currentProduct || state.history.find(h => h.id === productId);
+    if (product) {
+      state.compare.push(product);
+      showToast('Ajouté à la comparaison', 'success');
+    }
+  }
+  persist();
+  if (state.currentProduct) showProductDetail(state.currentProduct);
+}
+
+function renderHistory() {
+  const container = document.getElementById('historyList');
+  document.getElementById('fullHistoryCount').textContent = `(${state.history.length})`;
+  if (state.history.length === 0) {
+    container.innerHTML = '<div class="empty-state"><h3>Aucun historique</h3></div>';
+    return;
+  }
+  renderSearchResults(state.history, container);
+}
+
+function renderFavorites() {
+  const container = document.getElementById('favoritesList');
+  document.getElementById('favCount').textContent = `(${state.favorites.length})`;
+  if (state.favorites.length === 0) {
+    container.innerHTML = '<div class="empty-state"><h3>Aucun favori</h3><p>Ajoutez des produits à vos favoris depuis leur fiche</p></div>';
+    return;
+  }
+  renderSearchResults(state.favorites, container);
+}
+
+// ===== COMPARE =====
+function renderCompare() {
+  const container = document.getElementById('compareContent');
+  if (state.compare.length < 2) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <h3>${state.compare.length === 0 ? 'Aucun produit à comparer' : '1 produit sélectionné'}</h3>
+        <p>Sélectionnez au moins 2 produits depuis leurs fiches</p>
+        ${state.compare.length === 1 ? `<div class="product-card" style="max-width:300px;margin:0 auto"><div class="product-card-info"><div class="product-card-name">${escapeHtml(state.compare[0].name)}</div><div class="product-card-brand">${escapeHtml(state.compare[0].brand)}</div></div></div>` : ''}
+      </div>`;
+    return;
+  }
+
+  const metrics = [
+    { key: 'energy_kcal', label: 'Calories', unit: 'kcal', lower: true },
+    { key: 'fat', label: 'Graisses', unit: 'g', lower: true },
+    { key: 'saturated_fat', label: 'Saturés', unit: 'g', lower: true },
+    { key: 'carbs', label: 'Glucides', unit: 'g', lower: true },
+    { key: 'sugars', label: 'Sucres', unit: 'g', lower: true },
+    { key: 'fiber', label: 'Fibres', unit: 'g', lower: false },
+    { key: 'proteins', label: 'Protéines', unit: 'g', lower: false },
+    { key: 'salt', label: 'Sel', unit: 'g', lower: true },
+  ];
+
+  let html = `
+    <div class="flex gap-8 mb-16" style="overflow-x:auto">
+      ${state.compare.map((p, i) => `
+        <div class="card" style="min-width:120px;text-align:center;flex-shrink:0">
+          ${p.image ? `<img src="${p.image}" style="width:60px;height:60px;border-radius:8px;object-fit:cover;margin:0 auto 8px" onerror="this.style.display='none'">` : ''}
+          <div class="text-sm fw-600">${escapeHtml(p.name).substring(0, 30)}</div>
+          <div class="text-xs text-muted mb-8">${escapeHtml(p.brand)}</div>
+          ${p.nutriScore ? `<div class="nutri-score" style="justify-content:center;transform:scale(0.6)">${renderNutriScoreMini(p.nutriScore)}</div>` : ''}
+          <button class="btn btn-sm btn-ghost" onclick="state.compare.splice(${i},1);persist();renderCompare()">Retirer</button>
+        </div>
+      `).join('')}
+    </div>
+  `;
+
+  html += `<div class="card">`;
+  metrics.forEach(m => {
+    const values = state.compare.map(p => p.nutrients[m.key]);
+    const numVals = values.filter(v => v != null);
+    const best = numVals.length > 0 ? (m.lower ? Math.min(...numVals) : Math.max(...numVals)) : null;
+    const worst = numVals.length > 0 ? (m.lower ? Math.max(...numVals) : Math.min(...numVals)) : null;
+
+    html += `
+      <div class="compare-row">
+        <div class="compare-label">${m.label}</div>
+        <div class="compare-values">
+          ${values.map(v => {
+            if (v == null) return `<div class="compare-value">—</div>`;
+            let cls = '';
+            if (v === best && best !== worst) cls = 'best';
+            else if (v === worst && best !== worst) cls = 'worst';
+            return `<div class="compare-value ${cls}">${formatNum(v)} ${m.unit}</div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  });
+  html += `</div>`;
+
+  container.innerHTML = html;
+}
+
+// ===== FRIDGE =====
+function addFridgeItem() {
+  const name = document.getElementById('fridgeItemName').value.trim();
+  if (!name) { showToast('Entrez un nom', 'error'); return; }
+
+  const item = {
+    id: 'fridge_' + Date.now(),
+    name,
+    qty: parseFloat(document.getElementById('fridgeItemQty').value) || 1,
+    unit: document.getElementById('fridgeItemUnit').value,
+    category: document.getElementById('fridgeItemCategory').value,
+    expiry: document.getElementById('fridgeItemExpiry').value || null,
+    addedAt: new Date().toISOString(),
+  };
+
+  state.fridge.push(item);
+  persist();
+  closeModal('addFridgeModal');
+  document.getElementById('fridgeItemName').value = '';
+  document.getElementById('fridgeItemExpiry').value = '';
+  showToast(`${name} ajouté au frigo`, 'success');
+  renderFridge();
+}
+
+function addProductToFridge(productId) {
+  const product = state.currentProduct || state.history.find(h => h.id === productId);
+  if (!product) return;
+
+  const item = {
+    id: 'fridge_' + Date.now(),
+    name: product.name,
+    qty: 1,
+    unit: 'pièce(s)',
+    category: 'autre',
+    expiry: null,
+    addedAt: new Date().toISOString(),
+    productId: product.id,
+  };
+
+  state.fridge.push(item);
+  persist();
+  showToast(`${product.name} ajouté au frigo`, 'success');
+}
+
+function removeFridgeItem(id) {
+  state.fridge = state.fridge.filter(f => f.id !== id);
+  persist();
+  renderFridge();
+  showToast('Élément supprimé');
+}
+
+function setFridgeTab(tab) {
+  document.querySelectorAll('#fridgeTabs .tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  renderFridge(tab);
+}
+
+function renderFridge(filter = 'all') {
+  const container = document.getElementById('fridgeList');
+  let items = [...state.fridge];
+  const now = new Date();
+
+  if (filter === 'expiring') {
+    items = items.filter(i => {
+      if (!i.expiry) return false;
+      const diff = (new Date(i.expiry) - now) / (1000 * 60 * 60 * 24);
+      return diff >= 0 && diff <= 3;
+    });
+  } else if (filter === 'expired') {
+    items = items.filter(i => i.expiry && new Date(i.expiry) < now);
+  }
+
+  items.sort((a, b) => {
+    if (a.expiry && b.expiry) return new Date(a.expiry) - new Date(b.expiry);
+    if (a.expiry) return -1;
+    return 1;
+  });
+
+  if (items.length === 0) {
+    container.innerHTML = `<div class="empty-state"><h3>${filter === 'all' ? 'Votre frigo est vide' : 'Aucun produit dans cette catégorie'}</h3><p>Ajoutez des ingrédients ou scannez des produits</p></div>`;
+    return;
+  }
+
+  container.innerHTML = items.map(item => {
+    const emoji = CATEGORY_EMOJI[item.category] || '📦';
+    let expiryClass = 'ok', expiryText = '';
+    if (item.expiry) {
+      const diff = Math.ceil((new Date(item.expiry) - now) / (1000 * 60 * 60 * 24));
+      if (diff < 0) { expiryClass = 'expired'; expiryText = `Périmé (${Math.abs(diff)}j)`; }
+      else if (diff <= 3) { expiryClass = 'soon'; expiryText = `${diff}j restant${diff > 1 ? 's' : ''}`; }
+      else { expiryText = new Date(item.expiry).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }); }
+    }
+
+    return `
+      <div class="fridge-item">
+        <div class="fridge-item-icon">${emoji}</div>
+        <div class="fridge-item-info">
+          <div class="fridge-item-name">${escapeHtml(item.name)}</div>
+          <div class="fridge-item-detail">${item.qty} ${item.unit}</div>
+        </div>
+        ${expiryText ? `<div class="fridge-item-expiry ${expiryClass}">${expiryText}</div>` : ''}
+        <button class="btn-icon btn-secondary" onclick="removeFridgeItem('${item.id}')" style="background:var(--bg);border:1px solid var(--border)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+        </button>
+      </div>`;
+  }).join('');
+}
+
+// ===== MEAL SUGGESTIONS =====
+const RECIPE_DB = [
+  {
+    id: 'r1', name: 'Salade de tomates et mozzarella', time: 10, difficulty: 'Facile', calories: 250, budget: 'Budget',
+    tags: ['healthy', 'quick', 'budget', 'lowcal', 'vegetarian'],
+    ingredients: ['tomates', 'mozzarella', 'basilic', 'huile d\'olive'],
+    steps: ['Couper les tomates en tranches', 'Couper la mozzarella', 'Disposer en alternance', 'Ajouter basilic et huile d\'olive'],
+  },
+  {
+    id: 'r2', name: 'Pâtes au pesto', time: 15, difficulty: 'Facile', calories: 450, budget: 'Budget',
+    tags: ['quick', 'budget', 'vegetarian'],
+    ingredients: ['pâtes', 'pesto', 'parmesan', 'huile d\'olive'],
+    steps: ['Faire cuire les pâtes', 'Égoutter et mélanger avec le pesto', 'Servir avec le parmesan râpé'],
+  },
+  {
+    id: 'r3', name: 'Omelette aux légumes', time: 10, difficulty: 'Facile', calories: 300, budget: 'Budget',
+    tags: ['quick', 'budget', 'healthy', 'lowcal', 'vegetarian'],
+    ingredients: ['œufs', 'oignon', 'poivron', 'tomates', 'sel', 'poivre'],
+    steps: ['Battre les œufs', 'Couper les légumes en dés', 'Faire revenir les légumes', 'Verser les œufs et cuire'],
+  },
+  {
+    id: 'r4', name: 'Poulet grillé aux herbes', time: 30, difficulty: 'Moyen', calories: 350, budget: 'Moyen',
+    tags: ['healthy', 'high-protein'],
+    ingredients: ['poulet', 'herbes de provence', 'ail', 'huile d\'olive', 'citron'],
+    steps: ['Mariner le poulet avec herbes, ail et citron', 'Griller au four 25 minutes à 200°C', 'Servir avec une salade'],
+  },
+  {
+    id: 'r5', name: 'Soupe de légumes', time: 25, difficulty: 'Facile', calories: 150, budget: 'Budget',
+    tags: ['healthy', 'budget', 'lowcal', 'vegan'],
+    ingredients: ['carottes', 'pommes de terre', 'poireaux', 'oignon', 'sel'],
+    steps: ['Éplucher et couper les légumes', 'Faire revenir l\'oignon', 'Ajouter les légumes et couvrir d\'eau', 'Cuire 20 min et mixer'],
+  },
+  {
+    id: 'r6', name: 'Riz sauté aux crevettes', time: 20, difficulty: 'Moyen', calories: 400, budget: 'Moyen',
+    tags: ['quick'],
+    ingredients: ['riz', 'crevettes', 'oignon', 'ail', 'sauce soja', 'légumes'],
+    steps: ['Cuire le riz', 'Faire sauter les crevettes et légumes', 'Ajouter le riz et la sauce soja', 'Servir chaud'],
+  },
+  {
+    id: 'r7', name: 'Smoothie protéiné banane', time: 5, difficulty: 'Facile', calories: 280, budget: 'Budget',
+    tags: ['quick', 'healthy', 'budget', 'high-protein'],
+    ingredients: ['banane', 'lait', 'yaourt', 'miel', 'flocons d\'avoine'],
+    steps: ['Mettre tous les ingrédients dans un blender', 'Mixer jusqu\'à obtenir une texture lisse', 'Servir frais'],
+  },
+  {
+    id: 'r8', name: 'Wrap au thon', time: 10, difficulty: 'Facile', calories: 320, budget: 'Budget',
+    tags: ['quick', 'budget', 'healthy'],
+    ingredients: ['tortilla', 'thon', 'salade', 'tomates', 'maïs', 'mayonnaise'],
+    steps: ['Étaler la mayo sur la tortilla', 'Ajouter le thon émietté, salade, tomates et maïs', 'Rouler et couper en deux'],
+  },
+  {
+    id: 'r9', name: 'Curry de pois chiches', time: 30, difficulty: 'Moyen', calories: 380, budget: 'Budget',
+    tags: ['healthy', 'budget', 'vegan'],
+    ingredients: ['pois chiches', 'tomates', 'lait de coco', 'curry', 'oignon', 'ail', 'riz'],
+    steps: ['Faire revenir oignon et ail', 'Ajouter curry, tomates et lait de coco', 'Ajouter les pois chiches et mijoter 20 min', 'Servir avec du riz'],
+  },
+  {
+    id: 'r10', name: 'Croque-monsieur', time: 10, difficulty: 'Facile', calories: 420, budget: 'Budget',
+    tags: ['quick', 'budget'],
+    ingredients: ['pain de mie', 'jambon', 'fromage', 'beurre'],
+    steps: ['Beurrer les tranches de pain', 'Ajouter jambon et fromage', 'Passer au four ou à la poêle jusqu\'à gratiner'],
+  },
+  {
+    id: 'r11', name: 'Bowl quinoa-avocat', time: 15, difficulty: 'Facile', calories: 420, budget: 'Moyen',
+    tags: ['healthy', 'quick', 'vegan'],
+    ingredients: ['quinoa', 'avocat', 'tomates cerises', 'concombre', 'citron', 'huile d\'olive'],
+    steps: ['Cuire le quinoa', 'Couper les légumes', 'Assembler le bowl', 'Assaisonner avec citron et huile'],
+  },
+  {
+    id: 'r12', name: 'Steak haché purée', time: 20, difficulty: 'Facile', calories: 500, budget: 'Moyen',
+    tags: ['high-protein'],
+    ingredients: ['steak haché', 'pommes de terre', 'beurre', 'lait', 'sel', 'poivre'],
+    steps: ['Éplucher et cuire les pommes de terre', 'Écraser en purée avec beurre et lait', 'Cuire le steak à la poêle', 'Servir ensemble'],
+  },
+];
+
+function generateMealSuggestions(filter = 'all') {
+  const container = document.getElementById('mealSuggestions');
+  const fridgeItems = state.fridge.map(f => f.name.toLowerCase());
+
+  let recipes = RECIPE_DB.map(recipe => {
+    const available = recipe.ingredients.filter(i => fridgeItems.some(f => f.includes(i.toLowerCase()) || i.toLowerCase().includes(f)));
+    const missing = recipe.ingredients.filter(i => !fridgeItems.some(f => f.includes(i.toLowerCase()) || i.toLowerCase().includes(f)));
+    return { ...recipe, available, missing, matchScore: available.length / recipe.ingredients.length };
+  });
+
+  recipes.sort((a, b) => b.matchScore - a.matchScore);
+
+  if (filter !== 'all') {
+    const filterMap = { quick: r => r.time <= 15, healthy: r => r.tags.includes('healthy'), budget: r => r.budget === 'Budget', lowcal: r => r.calories <= 300 };
+    if (filterMap[filter]) recipes = recipes.filter(filterMap[filter]);
+  }
+
+  if (recipes.length === 0) {
+    container.innerHTML = '<div class="empty-state"><h3>Aucune recette correspondante</h3><p>Essayez un autre filtre</p></div>';
+    return;
+  }
+
+  container.innerHTML = recipes.map(r => `
+    <div class="recipe-card" onclick="showRecipeDetail('${r.id}')">
+      <div class="recipe-card-body">
+        <div class="recipe-card-title">${r.name}</div>
+        <div class="recipe-card-meta">
+          <span>⏱ ${r.time} min</span>
+          <span>🔥 ${r.calories} kcal</span>
+          <span>${r.difficulty}</span>
+          <span>💰 ${r.budget}</span>
+        </div>
+        ${r.matchScore > 0 ? `
+          <div class="progress-bar mb-8">
+            <div class="progress-bar-fill" style="width:${r.matchScore * 100}%;background:${r.matchScore > 0.7 ? 'var(--secondary)' : r.matchScore > 0.3 ? 'var(--accent)' : 'var(--danger)'}"></div>
+          </div>
+          <div class="text-xs text-muted">${r.available.length}/${r.ingredients.length} ingrédients disponibles</div>
+        ` : ''}
+        ${r.missing.length > 0 && r.matchScore > 0 ? `<div class="recipe-missing">Manquant : ${r.missing.join(', ')}</div>` : ''}
+        <div class="recipe-card-tags mt-8">
+          ${r.tags.slice(0, 3).map(t => `<span class="chip chip-primary">${t}</span>`).join('')}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function setMealFilter(filter) {
+  document.querySelectorAll('#mealFilters .filter-chip').forEach(c => c.classList.toggle('active', c.dataset.filter === filter));
+  generateMealSuggestions(filter);
+}
+
+function showRecipeDetail(recipeId) {
+  const recipe = RECIPE_DB.find(r => r.id === recipeId);
+  if (!recipe) return;
+
+  const fridgeItems = state.fridge.map(f => f.name.toLowerCase());
+  const missing = recipe.ingredients.filter(i => !fridgeItems.some(f => f.includes(i.toLowerCase()) || i.toLowerCase().includes(f)));
+
+  document.getElementById('recipeDetailContent').innerHTML = `
+    <div class="modal-title">${recipe.name}</div>
+    <div class="flex gap-12 mb-16">
+      <div class="chip chip-info">⏱ ${recipe.time} min</div>
+      <div class="chip chip-info">🔥 ${recipe.calories} kcal</div>
+      <div class="chip chip-info">${recipe.difficulty}</div>
+    </div>
+
+    <h4 class="fw-600 mb-8">Ingrédients</h4>
+    <ul style="margin-bottom:16px">
+      ${recipe.ingredients.map(i => {
+        const available = fridgeItems.some(f => f.includes(i.toLowerCase()) || i.toLowerCase().includes(f));
+        return `<li class="text-sm" style="padding:4px 0;color:${available ? 'var(--secondary)' : 'var(--text)'}">
+          ${available ? '✓' : '○'} ${i}
+        </li>`;
+      }).join('')}
+    </ul>
+
+    <h4 class="fw-600 mb-8">Préparation</h4>
+    <ol style="margin-bottom:16px;padding-left:20px;list-style:decimal">
+      ${recipe.steps.map(s => `<li class="text-sm" style="padding:4px 0">${s}</li>`).join('')}
+    </ol>
+
+    ${missing.length > 0 ? `
+      <button class="btn btn-primary btn-block" onclick="addMissingToShoppingList('${recipeId}')">
+        Ajouter ${missing.length} ingrédient${missing.length > 1 ? 's' : ''} manquant${missing.length > 1 ? 's' : ''} à la liste de courses
+      </button>
+    ` : `<div class="chip chip-success">Tous les ingrédients sont disponibles !</div>`}
+  `;
+  openModal('recipeDetailModal');
+}
+
+function addMissingToShoppingList(recipeId) {
+  const recipe = RECIPE_DB.find(r => r.id === recipeId);
+  if (!recipe) return;
+
+  const fridgeItems = state.fridge.map(f => f.name.toLowerCase());
+  const missing = recipe.ingredients.filter(i => !fridgeItems.some(f => f.includes(i.toLowerCase()) || i.toLowerCase().includes(f)));
+
+  missing.forEach(item => {
+    const exists = state.shopping.some(s => s.name.toLowerCase() === item.toLowerCase() && !s.checked);
+    if (!exists) {
+      state.shopping.push({ id: 'shop_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5), name: item, qty: 1, unit: '', checked: false });
+    }
+  });
+
+  persist();
+  closeModal('recipeDetailModal');
+  showToast(`${missing.length} article${missing.length > 1 ? 's' : ''} ajouté${missing.length > 1 ? 's' : ''} à la liste`, 'success');
+}
+
+// ===== SHOPPING LIST =====
+function addShoppingItem() {
+  const name = document.getElementById('shopItemName').value.trim();
+  if (!name) { showToast('Entrez un article', 'error'); return; }
+
+  state.shopping.push({
+    id: 'shop_' + Date.now(),
+    name,
+    qty: parseInt(document.getElementById('shopItemQty').value) || 1,
+    unit: document.getElementById('shopItemUnit').value,
+    checked: false,
+  });
+
+  persist();
+  closeModal('addShoppingModal');
+  document.getElementById('shopItemName').value = '';
+  showToast(`${name} ajouté à la liste`, 'success');
+  renderShoppingList();
+}
+
+function toggleShopItem(id) {
+  const item = state.shopping.find(s => s.id === id);
+  if (item) item.checked = !item.checked;
+  persist();
+  renderShoppingList();
+}
+
+function removeShopItem(id) {
+  state.shopping = state.shopping.filter(s => s.id !== id);
+  persist();
+  renderShoppingList();
+}
+
+function clearCheckedItems() {
+  state.shopping = state.shopping.filter(s => !s.checked);
+  persist();
+  renderShoppingList();
+  showToast('Articles cochés supprimés');
+}
+
+function renderShoppingList() {
+  const container = document.getElementById('shoppingListContent');
+  if (state.shopping.length === 0) {
+    container.innerHTML = '<div class="empty-state"><h3>Liste vide</h3><p>Ajoutez des articles ou générez une liste depuis les recettes</p></div>';
+    return;
+  }
+
+  const unchecked = state.shopping.filter(s => !s.checked);
+  const checked = state.shopping.filter(s => s.checked);
+
+  let html = '';
+  if (unchecked.length > 0) {
+    html += unchecked.map(item => renderShopItem(item)).join('');
+  }
+  if (checked.length > 0) {
+    html += `<div class="flex items-center justify-between mt-16 mb-8">
+      <div class="text-sm text-muted">${checked.length} acheté${checked.length > 1 ? 's' : ''}</div>
+      <button class="btn btn-ghost btn-sm" onclick="clearCheckedItems()">Supprimer les cochés</button>
+    </div>`;
+    html += checked.map(item => renderShopItem(item)).join('');
+  }
+
+  container.innerHTML = html;
+}
+
+function renderShopItem(item) {
+  return `
+    <div class="shop-item ${item.checked ? 'checked' : ''}">
+      <div class="shop-checkbox ${item.checked ? 'checked' : ''}" onclick="toggleShopItem('${item.id}')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="shop-item-name">${escapeHtml(item.name)}</div>
+      <div class="shop-item-qty">${item.qty > 1 ? `×${item.qty}` : ''} ${item.unit || ''}</div>
+      <button class="btn-icon" onclick="removeShopItem('${item.id}')" style="width:32px;height:32px;color:var(--text-muted)">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>`;
+}
+
+function exportShoppingList() {
+  const items = state.shopping.filter(s => !s.checked);
+  if (items.length === 0) { showToast('Rien à exporter', 'error'); return; }
+
+  const text = 'Liste de courses — NutriScan\n' + '='.repeat(30) + '\n\n' +
+    items.map(i => `☐ ${i.name}${i.qty > 1 ? ` ×${i.qty}` : ''}${i.unit ? ' ' + i.unit : ''}`).join('\n');
+
+  if (navigator.share) {
+    navigator.share({ title: 'Liste de courses', text }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(text).then(() => showToast('Liste copiée !', 'success'));
+  }
+}
+
+// ===== HOME REFRESH =====
+function refreshHome() {
+  document.getElementById('statScans').textContent = state.history.length;
+  document.getElementById('statFridge').textContent = state.fridge.length;
+  document.getElementById('statFavorites').textContent = state.favorites.length;
+  document.getElementById('statShop').textContent = state.shopping.filter(s => !s.checked).length;
+  document.getElementById('historyCount').textContent = state.history.length > 0 ? `(${state.history.length})` : '';
+
+  const recentContainer = document.getElementById('recentScans');
+  if (state.history.length > 0) {
+    const recent = state.history.slice(0, 5);
+    let html = '';
+    recent.forEach(p => {
+      html += `
+        <div class="product-card" onclick='showProductDetail(${JSON.stringify(p).replace(/'/g, "&#39;").replace(/</g, "&lt;")})'>
+          <img class="product-card-img" src="${p.image || 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect fill=%22%23e2e8f0%22 width=%2264%22 height=%2264%22/><text x=%2232%22 y=%2236%22 text-anchor=%22middle%22 font-size=%2224%22>🍽</text></svg>'}" alt="" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect fill=%22%23e2e8f0%22 width=%2264%22 height=%2264%22/><text x=%2232%22 y=%2236%22 text-anchor=%22middle%22 font-size=%2224%22>🍽</text></svg>'">
+          <div class="product-card-info">
+            <div class="product-card-name">${escapeHtml(p.name)}</div>
+            <div class="product-card-brand">${escapeHtml(p.brand)} ${p.quantity ? '· ' + escapeHtml(p.quantity) : ''}</div>
+            <div class="product-card-meta">
+              ${p.nutriScore ? `<div class="nutri-score" style="transform:scale(0.7);transform-origin:left">${renderNutriScoreMini(p.nutriScore)}</div>` : ''}
+            </div>
+          </div>
+        </div>`;
+    });
+    if (state.history.length > 5) {
+      html += `<button class="btn btn-ghost btn-block mt-8" onclick="navigateTo('history')">Voir tout l'historique (${state.history.length})</button>`;
+    }
+    recentContainer.innerHTML = html;
+  }
+
+  renderExpiryAlerts();
+  updateBadges();
+}
+
+function renderExpiryAlerts() {
+  const now = new Date();
+  const expiring = state.fridge.filter(item => {
+    if (!item.expiry) return false;
+    const diff = (new Date(item.expiry) - now) / (1000 * 60 * 60 * 24);
+    return diff <= 3;
+  }).sort((a, b) => new Date(a.expiry) - new Date(b.expiry));
+
+  const container = document.getElementById('expiryAlerts');
+  const list = document.getElementById('expiryAlertsList');
+
+  if (expiring.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+
+  container.style.display = 'block';
+  list.innerHTML = expiring.map(item => {
+    const diff = Math.ceil((new Date(item.expiry) - now) / (1000 * 60 * 60 * 24));
+    const isExpired = diff < 0;
+    return `
+      <div class="card mb-8" style="border-left:3px solid ${isExpired ? 'var(--danger)' : 'var(--warning)'}">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="fw-600 text-sm">${CATEGORY_EMOJI[item.category] || '📦'} ${escapeHtml(item.name)}</div>
+            <div class="text-xs ${isExpired ? 'text-muted' : ''}" style="color:${isExpired ? 'var(--danger)' : 'var(--warning)'}">
+              ${isExpired ? `Périmé depuis ${Math.abs(diff)} jour${Math.abs(diff) > 1 ? 's' : ''}` : `Expire dans ${diff} jour${diff > 1 ? 's' : ''}`}
+            </div>
+          </div>
+          <button class="btn btn-sm btn-ghost" onclick="removeFridgeItem('${item.id}');refreshHome()">Retirer</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function updateBadges() {
+  const fridgeBadge = document.getElementById('fridgeBadge');
+  const expiring = state.fridge.filter(i => {
+    if (!i.expiry) return false;
+    return (new Date(i.expiry) - new Date()) / (1000 * 60 * 60 * 24) <= 3;
+  }).length;
+  if (expiring > 0) {
+    fridgeBadge.style.display = 'flex';
+    fridgeBadge.textContent = expiring;
+  } else {
+    fridgeBadge.style.display = 'none';
+  }
+
+  const shopBadge = document.getElementById('shopBadge');
+  const shopCount = state.shopping.filter(s => !s.checked).length;
+  if (shopCount > 0) {
+    shopBadge.style.display = 'flex';
+    shopBadge.textContent = shopCount;
+  } else {
+    shopBadge.style.display = 'none';
+  }
+}
+
+// ===== SETTINGS =====
+function toggleDiet(diet) {
+  const idx = state.settings.diets.indexOf(diet);
+  if (idx >= 0) state.settings.diets.splice(idx, 1);
+  else state.settings.diets.push(diet);
+  persist();
+  updateSettingsUI();
+}
+
+function toggleAllergy(allergy) {
+  const idx = state.settings.allergies.indexOf(allergy);
+  if (idx >= 0) state.settings.allergies.splice(idx, 1);
+  else state.settings.allergies.push(allergy);
+  persist();
+  updateSettingsUI();
+}
+
+function updateSettingsUI() {
+  document.querySelectorAll('#dietOptions .filter-chip').forEach(c => {
+    c.classList.toggle('active', state.settings.diets.includes(c.dataset.diet));
+  });
+  document.querySelectorAll('#allergyOptions .filter-chip').forEach(c => {
+    c.classList.toggle('active', state.settings.allergies.includes(c.dataset.allergy));
+  });
+}
+
+// ===== IMPORT / EXPORT =====
+function exportAllData() {
+  const data = {
+    version: '1.0',
+    exportDate: new Date().toISOString(),
+    history: state.history,
+    favorites: state.favorites,
+    fridge: state.fridge,
+    shopping: state.shopping,
+    settings: state.settings,
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `nutriscan-export-${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('Données exportées', 'success');
+}
+
+function importAllData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (data.history) state.history = data.history;
+      if (data.favorites) state.favorites = data.favorites;
+      if (data.fridge) state.fridge = data.fridge;
+      if (data.shopping) state.shopping = data.shopping;
+      if (data.settings) state.settings = { ...state.settings, ...data.settings };
+      persist();
+      showToast('Données importées avec succès', 'success');
+      refreshHome();
+    } catch {
+      showToast('Fichier invalide', 'error');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+function clearAllData() {
+  if (!confirm('Êtes-vous sûr de vouloir effacer toutes les données ? Cette action est irréversible.')) return;
+  Object.values(DB_KEYS).forEach(key => localStorage.removeItem(key));
+  state.history = [];
+  state.favorites = [];
+  state.fridge = [];
+  state.shopping = [];
+  state.compare = [];
+  state.settings = { theme: state.settings.theme, diets: [], allergies: [] };
+  persist();
+  showToast('Toutes les données ont été effacées');
+  refreshHome();
+}
+
+// ===== UTILITIES =====
+function formatNum(n) {
+  if (n == null || isNaN(n)) return '—';
+  return Number(n).toLocaleString('fr-FR', { maximumFractionDigits: 1 });
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+// ===== INITIALIZATION =====
+document.addEventListener('DOMContentLoaded', () => {
+  applyTheme(state.settings.theme || 'light');
+  updateSettingsUI();
+  refreshHome();
+});
+</script>
+</body>
+</html>
